@@ -9,6 +9,9 @@ local bottom_term = {}
 
 
 local function bottom_term_new ()
+  --- The code in the curly braces below is responsible
+  --- for the correct 'Lua → Vim' dict conversion.
+  vim.t.bottom_term_session = {[vim.type_idx]=vim.types.dictionary}
   --- '_ephemeral' is like 'bottom_term_session' but hidden from a user.
   --- Moreover, in the current version of Neovim (0.7), it is not possible
   --- to fill up a VimL dict from the Lua side (at least, to my knowledge).
@@ -20,14 +23,16 @@ local function bottom_term_new ()
     bottom_term.opts[key] = vim.t.bottom_term_session[key] or reset
   end
 
-  local nr = fn.bufnr('BottomTerm')
+  local name = 'BottomTerm' .. api.nvim_get_current_tabpage()
+  local nr = fn.bufnr(name)
   local suffix = ''
 
   if nr >= 0 and not is_buftype_terminal(nr) then
     suffix = '_'
   end
 
-  vim.t.bottom_term_name = 'BottomTerm' .. suffix
+  --- To shadow non-terminal buffer with the same name.
+  vim.t.bottom_term_name = name .. suffix
 
   vim.cmd('new | terminal')
   local bh = api.nvim_get_current_buf()

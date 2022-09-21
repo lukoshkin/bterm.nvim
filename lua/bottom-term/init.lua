@@ -77,10 +77,6 @@ function M.setup(conf)
   vim.keymap.set('t', '<C-w>', '<Esc><C-w>', {remap=true})
   vim.keymap.set('t', orient, bt.reverse_orientation)
   vim.keymap.set('n', close, bt.terminate)
-
-  --- The code in the curly braces below is responsible
-  --- for the correct 'Lua → Vim' dict conversion.
-  vim.t.bottom_term_session = {[vim.type_idx]=vim.types.dictionary}
 end
 
 

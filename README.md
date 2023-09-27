@@ -1,7 +1,10 @@
 # B[etter/ottom] Terminal
 
-Just another plugin for quicker access to a terminal in Neovim.  
-Adds mappings for _opening, hiding, and changing orientation_.  
+Sometimes you don't need a floating window, you just want aligned splits  
+and to quickly jump between them. For this case, `bterm` might be the choice.
+
+`bterm` is a plugin for quicker access to a terminal in Neovim.  
+It adds mappings for _opening, hiding, and changing orientation_.  
 As well as a couple of auto-commands for a better experience.
 
 Note that with the mappings, you can create no more than one terminal per tab.  
@@ -49,7 +52,7 @@ use {
         insert_on_switch = true,
         --- Close the terminal window if there are no other windows.
         close_if_last = true,
-        --- Do not switch to the terminal on its open.
+        --- Switch to the terminal window on its open.
         focus_on_caller = false,
         --- Do not show BottomTerm buffer in the buffer list.
         buflisted = false,

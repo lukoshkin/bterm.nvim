@@ -1,17 +1,17 @@
 local api = vim.api
-local bt = require'bottom-term.core'
-local bt_utils = require'bottom-term.utils'
+local bt = require 'bottom-term.core'
+local bt_utils = require 'bottom-term.utils'
 local M = {}
 
 
-local aug_bt = api.nvim_create_augroup('BottomTerm', {clear=true})
+local aug_bt = api.nvim_create_augroup('BottomTerm', { clear = true })
 
 api.nvim_create_autocmd('TermClose', {
   pattern = 'BottomTerm*',
-  callback = function ()
+  callback = function()
     --- Assign to a new pointer or just remove it ─
     --- GC handles the memory deallocation.
-    vim.t.bottom_term_session = {[vim.type_idx]=vim.types.dictionary}
+    vim.t.bottom_term_session = { [vim.type_idx] = vim.types.dictionary }
     bt._ephemeral = nil
 
     vim.t.bottom_term_name = nil
@@ -21,8 +21,13 @@ api.nvim_create_autocmd('TermClose', {
 
 api.nvim_create_user_command(
   'BottomTerm',
-  function (cmd) bt.execute(cmd.args) end,
-  { nargs='?' }
+  function(cmd)
+    if not bt.is_visible() then
+      bt.toggle()
+    end
+    bt.execute(cmd.args)
+  end,
+  { nargs = '?' }
 )
 
 
@@ -43,7 +48,7 @@ function M.setup(conf)
   if bt.opts.insert_on_switch then
     api.nvim_create_autocmd('BufEnter', {
       pattern = 'BottomTerm*',
-      callback = function ()
+      callback = function()
         if bt_utils.is_buftype_terminal() then
           vim.cmd 'startinsert'
         end
@@ -54,12 +59,10 @@ function M.setup(conf)
 
   if not bt.opts.buflisted
       and bt.opts.close_if_last then
-    api.nvim_create_autocmd('BufEnter', {
-      pattern = 'BottomTerm*',
-      callback = function ()
-        if #bt_utils.only_normal_windows() == 1
-            and bt_utils.is_buftype_terminal() then
-          vim.cmd 'quit'
+    api.nvim_create_autocmd('QuitPre', {
+      callback = function()
+        if bt_utils.ready_to_exit() then
+          vim.cmd 'quitall'
         end
       end,
       group = aug_bt
@@ -73,11 +76,13 @@ function M.setup(conf)
 
   vim.keymap.set('n', toggle, bt.toggle)
   vim.keymap.set('t', '<Esc>', '<C-\\><C-n>')
-  vim.keymap.set('t', toggle, '<Esc>:q<Bar>echo<CR>', {remap=true})
-  vim.keymap.set('t', '<C-w>', '<Esc><C-w>', {remap=true})
+  vim.keymap.set('t', toggle, '<Esc>:q<Bar>echo<CR>', { remap = true })
+  vim.keymap.set('t', '<C-w>', '<Esc><C-w>', { remap = true })
   vim.keymap.set('t', orient, bt.reverse_orientation)
   vim.keymap.set('n', close, bt.terminate)
-end
 
+  vim.keymap.set('n', '<C-c><C-c>', bt.copy_line_and_run)
+  vim.keymap.set('n', '<Space>l', function() bt.execute('clear') end)
+end
 
 return M

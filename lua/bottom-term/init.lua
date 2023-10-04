@@ -80,9 +80,6 @@ function M.setup(conf)
   vim.keymap.set('t', '<C-w>', '<Esc><C-w>', { remap = true })
   vim.keymap.set('t', orient, bt.reverse_orientation)
   vim.keymap.set('n', close, bt.terminate)
-
-  vim.keymap.set('n', '<C-c><C-c>', bt.copy_line_and_run)
-  vim.keymap.set('n', '<Space>l', function() bt.execute('clear') end)
 end
 
 return M

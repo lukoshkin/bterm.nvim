@@ -106,20 +106,6 @@ function M.execute(cmd)
 end
 
 
-function M.copy_line_and_run()
-  local line = api.nvim_get_current_line()
-  M.execute(line .. '\n')
-end
-
-
-function M.copy_cell_and_run(pat)
-  local top = fn.search(pat, 'bnW')  -- either <some> or zero (beg)
-  local bot = fn.search(pat, 'cnW') - 1  -- either <some> - 1 or -1 (end)
-  local lines = table.concat(api.nvim_buf_get_lines(0, top, bot, false), '\n')
-  M.execute(lines .. '\n')
-end
-
-
 function M.reverse_orientation()
   if vim.t.bottom_term_name == nil then
     return

@@ -9,12 +9,37 @@ M.default = {
 
     close_if_last = true,
     buflisted = false,
+
+    float_term_height = 0.8,
+    float_term_width = 0.8,
   },
   keys = {
+    float_toggle = '<A-w>',
     toggle = '<A-t>',
     orientation = '<C-t>',
     close = '<A-c>',
   },
+}
+
+local screen_width = vim.opt.columns:get()
+local screen_height = vim.opt.lines:get() - vim.opt.cmdheight:get()
+local term_width_ratio = M.default.opts.float_term_width
+local term_height_ratio = M.default.opts.float_term_height
+local term_width = math.floor(term_width_ratio * screen_width)
+local term_height = math.floor(term_height_ratio * screen_height)
+local center_x = math.floor((screen_width - term_width) / 2)
+local center_y = math.floor(
+  (vim.opt.lines:get() - term_height) / 2 - vim.opt.cmdheight:get()
+)
+
+M.floating_win_opts = {
+  relative = "editor",
+  width = term_width,
+  height = term_height,
+  row = center_y,
+  col = center_x,
+  style = "minimal",
+  border = "rounded",
 }
 
 

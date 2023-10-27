@@ -1,10 +1,23 @@
 local api = vim.api
 local bt = require 'bottom-term.core'
-local bt_utils = require 'bottom-term.utils'
+local utils = require 'bottom-term.utils'
 local M = {}
 
-
 local aug_bt = api.nvim_create_augroup('BottomTerm', { clear = true })
+api.nvim_create_autocmd('TermClose', {
+  pattern = 'FloatingTerm*',
+  callback = function()
+    vim.t.floating_term_name = nil
+  end,
+  group = aug_bt
+})
+api.nvim_create_user_command(
+  'FloatingTerm', -- not sure how useful this mapping is
+  function(cmd)
+    bt.float_execute(cmd.args)
+  end,
+  { nargs = '?' }
+)
 
 api.nvim_create_autocmd('TermClose', {
   pattern = 'BottomTerm*',
@@ -12,13 +25,11 @@ api.nvim_create_autocmd('TermClose', {
     --- Assign to a new pointer or just remove it ─
     --- GC handles the memory deallocation.
     vim.t.bottom_term_session = { [vim.type_idx] = vim.types.dictionary }
-    bt._ephemeral = nil
-
+    bt._ephemeral[api.nvim_get_current_tabpage()] = nil
     vim.t.bottom_term_name = nil
   end,
   group = aug_bt
 })
-
 api.nvim_create_user_command(
   'BottomTerm',
   function(cmd)
@@ -32,16 +43,9 @@ api.nvim_create_user_command(
 
 
 function M.setup(conf)
-  conf = conf or {}
-  conf.keys = conf.keys or {}
-  conf.opts = conf.opts or {}
-
-
-  bt.opts, bt.bak_opts = {}, {}
-  for key, value in pairs(bt_utils.default.opts) do
-    bt.opts[key] = conf.opts[key] or value
-    bt.bak_opts[key] = bt.opts[key]
-  end
+  conf = vim.tbl_deep_extend('keep', conf or {}, utils.default)
+  bt._bak_opts = vim.deepcopy(conf.opts)
+  bt.opts = conf.opts
 
   --- To make it possible to change 'insert_on_switch' for one bt session,
   --- the option should be checked in the callback fn (not outside of au).
@@ -49,7 +53,7 @@ function M.setup(conf)
     api.nvim_create_autocmd('BufEnter', {
       pattern = 'BottomTerm*',
       callback = function()
-        if bt_utils.is_buftype_terminal() then
+        if utils.is_buftype_terminal() then
           vim.cmd 'startinsert'
         end
       end,
@@ -61,7 +65,7 @@ function M.setup(conf)
       and bt.opts.close_if_last then
     api.nvim_create_autocmd('QuitPre', {
       callback = function()
-        if bt_utils.ready_to_exit() then
+        if utils.ready_to_exit() then
           vim.cmd 'quitall'
         end
       end,
@@ -69,17 +73,14 @@ function M.setup(conf)
     })
   end
 
-
-  local toggle = conf.keys.toggle or bt_utils.default.keys.toggle
-  local orient = conf.keys.orientation or bt_utils.default.keys.orientation
-  local close = conf.keys.close or bt_utils.default.keys.close
-
-  vim.keymap.set('n', toggle, bt.toggle)
-  vim.keymap.set('t', '<Esc>', '<C-\\><C-n>')
-  vim.keymap.set('t', toggle, '<Esc>:q<Bar>echo<CR>', { remap = true })
+  --- ''  - normal, visual, select, and operator-pending modes.
+  --- '!' - insert and command line modes.
+  vim.keymap.set({'', 'i', 't'}, conf.keys.float_toggle, bt.float_toggle)
+  vim.keymap.set({'', 'i', 't'}, conf.keys.toggle, bt.toggle)
   vim.keymap.set('t', '<C-w>', '<Esc><C-w>', { remap = true })
-  vim.keymap.set('t', orient, bt.reverse_orientation)
-  vim.keymap.set('n', close, bt.terminate)
+  vim.keymap.set('t', conf.keys.orientation, bt.reverse_orientation)
+  vim.keymap.set({'', 'i', 't'}, conf.keys.close, bt.terminate)
+  vim.keymap.set('t', '<Esc>', '<C-\\><C-n>')
 end
 
 return M

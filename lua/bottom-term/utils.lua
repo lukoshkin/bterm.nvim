@@ -14,10 +14,10 @@ M.default = {
     float_term_width = 0.8,
   },
   keys = {
-    float_toggle = '<A-w>',
-    toggle = '<A-t>',
-    orientation = '<C-t>',
-    close = '<A-c>',
+    float_toggle = "<A-w>",
+    toggle = "<A-t>",
+    orientation = "<C-t>",
+    close = "<A-c>",
   },
 }
 
@@ -28,9 +28,8 @@ local term_height_ratio = M.default.opts.float_term_height
 local term_width = math.floor(term_width_ratio * screen_width)
 local term_height = math.floor(term_height_ratio * screen_height)
 local center_x = math.floor((screen_width - term_width) / 2)
-local center_y = math.floor(
-  (vim.opt.lines:get() - term_height) / 2 - vim.opt.cmdheight:get()
-)
+local center_y =
+  math.floor((vim.opt.lines:get() - term_height) / 2 - vim.opt.cmdheight:get())
 
 M.floating_win_opts = {
   relative = "editor",
@@ -42,14 +41,13 @@ M.floating_win_opts = {
   border = "rounded",
 }
 
-
 function M.is_buftype_terminal(bufnr)
-  return api.nvim_buf_get_option(bufnr or 0, 'buftype') == 'terminal'
+  return api.nvim_buf_get_option(bufnr or 0, "buftype") == "terminal"
 end
 
 function M.tabpage_normal_windows()
   local normal_windows = vim.tbl_filter(function(key)
-    return api.nvim_win_get_config(key).relative == ''
+    return api.nvim_win_get_config(key).relative == ""
   end, api.nvim_tabpage_list_wins(0))
 
   return normal_windows
@@ -70,7 +68,7 @@ function M.term_safe_close(wid)
 end
 
 local function is_essential_buffer(bufnr)
-  return api.nvim_buf_get_option(bufnr or 0, 'buftype') == ''
+  return api.nvim_buf_get_option(bufnr or 0, "buftype") == ""
 end
 
 function M.ready_to_exit()

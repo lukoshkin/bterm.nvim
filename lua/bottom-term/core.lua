@@ -33,6 +33,48 @@ local function execute(cmd, channel)
   end
 end
 
+local function low_level_terminal(start_cmd)
+  local scratch = true
+  local bh = api.nvim_create_buf(M.opts.buflisted or false, scratch)
+  api.nvim_buf_set_name(bh, vim.t.bottom_term_name)
+
+  api.nvim_command "bot split"
+  local wh = vim.api.nvim_get_current_win()
+
+  api.nvim_win_set_buf(wh, bh)
+  local term_channel_id = api.nvim_open_term(bh, {
+    on_input = function(_, _, _, data)
+      if M.bt_jobid then
+        pcall(api.nvim_chan_send, M.bt_jobid, data)
+      end
+    end,
+  })
+  local opts = {
+    pty = true,
+    height = M.opts.hor_height,
+    on_stdout = function(_, data)
+      api.nvim_chan_send(term_channel_id, table.concat(data, "\n"))
+    end,
+    on_exit = M.terminate,
+  }
+  M.bt_jobid = vim.fn.jobstart(start_cmd, opts)
+  return M.bt_jobid
+end
+
+local function high_end_terminal()
+  vim.cmd "bot split | terminal"
+  local bh = api.nvim_get_current_buf()
+
+  api.nvim_buf_set_name(bh, vim.t.bottom_term_name)
+  api.nvim_buf_set_option(bh, "modifiable", false)
+  api.nvim_buf_set_option(bh, "bufhidden", "hide")
+  api.nvim_buf_set_option(bh, "buflisted", M.opts.buflisted or false)
+
+  vim.t.bottom_term_horizontal = true
+  M.bt_jobid = api.nvim_buf_get_var(0, "terminal_job_id")
+  return M.bt_jobid
+end
+
 function M.bottom_term_new(start_cmd)
   vim.t.bottom_term_name, tnr = tabpage_unique_name "BottomTerm"
   vim.t.bottom_term_session = { [vim.type_idx] = vim.types.dictionary }
@@ -50,31 +92,13 @@ function M.bottom_term_new(start_cmd)
   end
 
   vim.t.bottom_term_associated_buf = api.nvim_get_current_buf()
+  if start_cmd then
+    vim.t.bottom_term_channel = low_level_terminal(start_cmd)
+    bt_utils.toggle_number_column()
+  else
+    vim.t.bottom_term_channel = high_end_terminal()
+  end
 
-  local scratch = true
-  local bh = api.nvim_create_buf(M.opts.buflisted or false, scratch)
-  api.nvim_buf_set_name(bh, vim.t.bottom_term_name)
-
-  api.nvim_command "bot split"
-  local wh = vim.api.nvim_get_current_win()
-
-  api.nvim_win_set_buf(wh, bh)
-  vim.t.bottom_term_channel = api.nvim_open_term(bh, {
-    on_input = function(_, _, _, data)
-      if vim.t.bt_jobid then
-        pcall(api.nvim_chan_send, vim.t.bt_jobid, data)
-      end
-    end,
-  })
-  local opts = {
-    pty = true,  -- haven't explore whether it gives any benefits
-    height = M.opts.hor_height,
-    on_stdout = function(_, data)
-      api.nvim_chan_send(vim.t.bottom_term_channel, table.concat(data, "\n"))
-    end,
-    on_exit = M.terminate,
-  }
-  vim.t.bt_jobid = vim.fn.jobstart(start_cmd or vim.o.shell, opts)
   vim.cmd("resize" .. M.opts.hor_height)
   vim.t.bottom_term_horizontal = true
 end
@@ -164,7 +188,7 @@ function M.execute(cmd)
     return
   end
 
-  execute(cmd, vim.t.bt_jobid)
+  execute(cmd, M.bt_jobid)
 end
 
 function M.float_execute(cmd)

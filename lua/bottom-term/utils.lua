@@ -87,4 +87,13 @@ function M.ready_to_exit()
   return essential_win_cnt <= 1
 end
 
+function M.toggle_number_column()
+  if vim.opt.number:get() ~= vim.opt.relativenumber:get() then
+    vim.opt.number = vim.opt.relativenumber:get()
+  end
+
+  vim.opt.number = not vim.opt.number:get()
+  vim.opt.relativenumber = not vim.opt.relativenumber:get()
+end
+
 return M

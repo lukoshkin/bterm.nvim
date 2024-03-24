@@ -37,18 +37,9 @@ api.nvim_create_user_command("BottomTerm", function(cmd)
   bt.execute(cmd.args)
 end, { nargs = "?" })
 
-local function toggle_number()
-  if vim.opt.number:get() ~= vim.opt.relativenumber:get() then
-    vim.opt.number = vim.opt.relativenumber:get()
-  end
-
-  vim.opt.number = not vim.opt.number:get()
-  vim.opt.relativenumber = not vim.opt.relativenumber:get()
-end
-
-api.nvim_create_autocmd({ "TermEnter", "TermLeave" }, {
+api.nvim_create_autocmd({ "TermEnter", "TermLeave", "BufEnter", "BufLeave" }, {
   pattern = "BottomTerm*",
-  callback = toggle_number,
+  callback = utils.toggle_number_column,
   group = aug_bt,
 })
 

@@ -57,7 +57,7 @@ local function low_level_terminal(start_cmd)
     end,
     on_exit = M.terminate,
   }
-  M.bt_jobid = vim.fn.jobstart(start_cmd, opts)
+  M.bt_jobid = fn.jobstart(start_cmd, opts)
   return M.bt_jobid
 end
 
@@ -66,9 +66,13 @@ local function high_end_terminal()
   local bh = api.nvim_get_current_buf()
 
   api.nvim_buf_set_name(bh, vim.t.bottom_term_name)
-  api.nvim_buf_set_option(bh, "modifiable", false)
-  api.nvim_buf_set_option(bh, "bufhidden", "hide")
-  api.nvim_buf_set_option(bh, "buflisted", M.opts.buflisted or false)
+  api.nvim_set_option_value("modifiable", false, { buf = bh })
+  api.nvim_set_option_value("bufhidden", "hide", { buf = bh })
+  api.nvim_set_option_value(
+    "buflisted",
+    M.opts.buflisted or false,
+    { buf = bh }
+  )
 
   vim.t.bottom_term_horizontal = true
   M.bt_jobid = api.nvim_buf_get_var(0, "terminal_job_id")
@@ -76,6 +80,7 @@ local function high_end_terminal()
 end
 
 function M.bottom_term_new(start_cmd)
+  local tnr
   vim.t.bottom_term_name, tnr = tabpage_unique_name "BottomTerm"
   vim.t.bottom_term_session = { [vim.type_idx] = vim.types.dictionary }
   --- 1. The code in the curly braces above is responsible
@@ -92,13 +97,10 @@ function M.bottom_term_new(start_cmd)
   end
 
   vim.t.bottom_term_associated_buf = api.nvim_get_current_buf()
-  if start_cmd then
-    vim.t.bottom_term_channel = low_level_terminal(start_cmd)
-    bt_utils.toggle_number_column()
-  else
-    vim.t.bottom_term_channel = high_end_terminal()
-  end
+  vim.t.bottom_term_channel = start_cmd and low_level_terminal(start_cmd)
+    or high_end_terminal()
 
+  bt_utils.toggle_number_column()
   vim.cmd("resize" .. M.opts.hor_height)
   vim.t.bottom_term_horizontal = true
 end
@@ -110,7 +112,7 @@ local function floating_term_new()
   local enter_on_open = true
   local bh = vim.api.nvim_create_buf(buflisted, scratch)
   vim.api.nvim_open_win(bh, enter_on_open, bt_utils.floating_win_opts)
-  vim.t.floating_term_channel = fn.termopen(vim.o.shell:match "^.+/(.+)$")
+  vim.t.floating_term_channel = fn.jobstart(vim.o.shell, { term = true })
 
   vim.t.floating_term_name = tabpage_unique_name "FloatingTerm"
   api.nvim_buf_set_name(bh, vim.t.floating_term_name)

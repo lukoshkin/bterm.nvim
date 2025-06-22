@@ -42,7 +42,7 @@ M.floating_win_opts = {
 }
 
 function M.is_buftype_terminal(bufnr)
-  return api.nvim_buf_get_option(bufnr or 0, "buftype") == "terminal"
+  return vim.bo[bufnr or 0].buftype == "terminal"
 end
 
 function M.tabpage_normal_windows()
@@ -68,7 +68,7 @@ function M.term_safe_close(wid)
 end
 
 local function is_essential_buffer(bufnr)
-  return api.nvim_buf_get_option(bufnr or 0, "buftype") == ""
+  return vim.bo[bufnr or 0].buftype == ""
 end
 
 function M.ready_to_exit()
